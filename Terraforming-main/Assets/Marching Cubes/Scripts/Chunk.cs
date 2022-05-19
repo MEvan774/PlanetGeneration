@@ -60,9 +60,13 @@ public class Chunk
 
 		int triangleIndex = 0;
 
+		//Vector2[] uv = mesh.uv;
+
 		for (int i = 0; i < numVertices; i++)
 		{
 			VertexData data = vertexData[i];
+
+			//uv[i] = new Vector2(_colorGen.BiomePercentFromPoint(Vector2.up), 0);
 
 			int sharedVertexIndex;
 			if (!useFlatShading && vertexIndexMap.TryGetValue(data.id, out sharedVertexIndex))
@@ -88,6 +92,8 @@ public class Chunk
 		mesh.SetVertices(processedVertices);
 		mesh.SetTriangles(processedTriangles, 0, true);
 
+		//mesh.uv = uv;
+
 		if (useFlatShading)
 		{
 			mesh.RecalculateNormals();
@@ -99,6 +105,22 @@ public class Chunk
 
 		collider.sharedMesh = mesh;
 	}
+
+	
+	void UpdateUVs(ColorGen _colorGen, int _numVertice)
+    {
+		Vector2[] uv = new Vector2[numPointsPerAxis * numPointsPerAxis];
+
+					for (int i = 0; i < _numVertice; i++)
+		{
+
+
+			uv[i] = new Vector2(_colorGen.BiomePercentFromPoint(Vector3.up), 0);
+		}
+
+		mesh.uv = uv;
+	}
+	
 
 	public struct PointData
 	{
@@ -112,7 +134,7 @@ public class Chunk
 		collider.sharedMesh = mesh;
 	}
 
-	public void SetMaterial(Material material, BiomeHandler biomeHandler)
+	public void SetMaterial(Material material)
 	{
 		renderer.material = material;
 		//renderer.material.mainTexture = biomeHandler.GenerateTexture();

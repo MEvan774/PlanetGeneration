@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ColorGen : MonoBehaviour
 {
-    ColorSettings settings;
+    [SerializeField] ColorSettings settings;
     Texture2D texture;
     const int textureResolution = 50;
 

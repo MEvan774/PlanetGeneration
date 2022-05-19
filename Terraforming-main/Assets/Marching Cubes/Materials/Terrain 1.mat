@@ -19,6 +19,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BiomeTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -87,4 +91,8 @@ Material:
     - _RockInnerDeep: {r: 0.36862746, g: 0, b: 0.34267107, a: 1}
     - _RockInnerShallow: {r: 0.3962264, g: 0.26017246, b: 0.15512636, a: 1}
     - _RockLight: {r: 0.5943396, g: 0.36826882, b: 0.19344072, a: 1}
+    - _snowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _snowDark: {r: 0.76432896, g: 0.7899709, b: 0.8962264, a: 1}
+    - _snowLight: {r: 0.9015308, g: 0.9811321, b: 0.9788153, a: 1}
+    - _testColor: {r: 1, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

@@ -4,6 +4,7 @@ using System.Collections;
 
 public class FirstPersonController : MonoBehaviour
 {
+	private GravityControl gravityControl;
 
 	public enum MoveState
 	{
@@ -46,6 +47,8 @@ public class FirstPersonController : MonoBehaviour
 
 	void Awake()
 	{
+		gravityControl = GetComponent<GravityControl>();
+
 		Water water = FindObjectOfType<Water>();
 		if (water)
 		{
@@ -174,12 +177,13 @@ public class FirstPersonController : MonoBehaviour
 			return;
 		}
 
-		Vector3 planetCentre = Vector3.zero;
+		//Vector3 planetCentre = Vector3.zero;
+		Vector3 planetCentre = gravityControl.gravityUp;
 		Vector3 gravityUp = (rigidBody.position - planetCentre).normalized;
 
 		// Align body's up axis with the centre of planet
 		Vector3 localUp = MathUtility.LocalToWorldVector(rigidBody.rotation, Vector3.up);
-		rigidBody.rotation = Quaternion.FromToRotation(localUp, gravityUp) * rigidBody.rotation;
+		rigidBody.rotation = Quaternion.FromToRotation(localUp, transform.up) * rigidBody.rotation;
 
 		rigidBody.velocity = (underwater) ? CalculateNewVelocitySwim(localUp) : CalculateNewVelocity(localUp);
 

@@ -2,6 +2,7 @@
 #include "/Includes/Noise.compute"
 
 RWTexture3D<float> DensityTexture;
+RWTexture3D<float> BaseTexture;
 int textureSize;
 
 float planetSize;
@@ -14,8 +15,10 @@ float fbm(int numLayers, float lacunarity, float persistence, float scale, float
 	float amplitude = 1;
 
 	for (int i = 0; i < numLayers; i ++) {
+		//float n = 1-abs(snoise(pos * frequency)*2-1);
 		float n = 1-abs(snoise(pos * frequency)*2-1);
 		//n*=n;
+
 		noise += n * amplitude;
 
 		amplitude *= persistence;
@@ -25,17 +28,44 @@ float fbm(int numLayers, float lacunarity, float persistence, float scale, float
 	return noise;
 }
 
+
+struct TexData {
+	float3 positionOS;
+	float4 uv : TEXCOORD0;
+};
+
+//--Box shape SDF for base planet shape--
+float vmax(float3 v)
+{
+	return max(max(v.x, v.y), v.z);
+}
+
+float sdf_boxcheap(float3 p, float3 c, float3 s)
+{
+	//return vmax(abs(position - Centre) - s);
+	return vmax(abs(p - c) - s);
+}
+//----
+
 float calculateDensity(int3 cell) {
-	float3 worldPos = (cell / float(textureSize-1.0) - 0.5f) * planetSize;
+
+	//float3 worldPos = (cell / float(textureSize-1.0) - 0.5f) * planetSize;
+	float3 worldPos = 0;
+	float3 boxShape = 0;
+	float3 minusworldPos = 0;
+	const int b = 50;
+
+	worldPos = (cell / float(textureSize - 1.0) - 0.5) * planetSize;
+
+	//--Set box shape--
+	boxShape = sdf_boxcheap(1, (cell / float(textureSize - 1.0) - 0.5) * planetSize, 1);
+
 
 	float halfS = planetSize / 2;
 	float maxD = length(float3(halfS,halfS,halfS));
-
 	float fudge = 1;
+	float density = length(boxShape) / (maxD + fudge) - 0.5;
 
-	float density = length(worldPos) / (maxD + fudge) - 0.5;
-
-	// Noise
 	float noise = fbm(6, 2, 0.5, noiseScale, worldPos) * noiseHeightMultiplier;
 
 	density += noise;
@@ -53,10 +83,12 @@ void CSMain (int3 id : SV_DispatchThreadID)
 	float density = 0;
 
 	const int b = 1;
+	//const int b = 30;
+
 	if (id.x >= textureSize-b || id.y >= textureSize-b || id.z >= textureSize-b) {
 		density = 1;
-	}
-	else if (id.x <= b || id.y <= b || id.z <=b) {
+	}	
+	else if (id.x <= b || id.y <= b || id.z <= b) {
 		density = 1;
 	}
 	else {

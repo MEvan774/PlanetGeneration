@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5d5a611d61574d40a4a69bb4e0436e7, type: 3}
+  m_Name: DarkGrass
+  m_EditorClassIdentifier: 
+  lightGrassColor: {r: 0.21703447, g: 0.8396226, b: 0.252147, a: 0}
+  darkGrassColor: {r: 0.08771803, g: 0.6037736, b: 0.39226004, a: 0}
+  textureSize: 32
+  noiseTex: {fileID: 0}
+  graphLoc: {x: 0.7, y: 0.1}
+  maxWarmth: 0.2
+  minWarmth: -0.1
+  maxHumiddity: 0.5
+  minHumiddity: 0.1
+  graphSize: 10
+  octaves: 1
+  multiplier: 2
+  amplitude: 0.5
+  lacunarity: 2
+  persistence: 0.9

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5d5a611d61574d40a4a69bb4e0436e7, type: 3}
+  m_Name: Desert
+  m_EditorClassIdentifier: 
+  lightGrassColor: {r: 1, g: 0.82972884, b: 0.2679245, a: 1}
+  darkGrassColor: {r: 1, g: 0.5845777, b: 0.20188677, a: 0}
+  textureSize: 32
+  noiseTex: {fileID: 0}
+  graphLoc: {x: -0.7, y: 0.8}
+  maxWarmth: 0.8
+  minWarmth: 0.6
+  maxHumiddity: -0.7
+  minHumiddity: -1
+  graphSize: 5
+  treePrefabs:
+  - {fileID: 3957257589906991299, guid: a6414b31c4e6d5b48999612d960717e8, type: 3}
+  octaves: 1
+  multiplier: 2
+  amplitude: 0.5
+  lacunarity: 2
+  persistence: 0.9

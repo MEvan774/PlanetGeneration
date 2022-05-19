@@ -59,7 +59,8 @@ Vertex createVertex(int3 coordA, int3 coordB) {
 	float densityB = sampleDensity(coordB);
 
 	// Interpolate between the two corner points based on the density
-	float t = (isoLevel - densityA) / (densityB - densityA);
+	//float t = (isoLevel - densityA) / (densityB - densityA);
+	float t = 0.5f;
 	float3 position = posA + t * (posB - posA);
 
 	// Normal:
@@ -92,6 +93,7 @@ void ProcessCube (int3 id : SV_DispatchThreadID)
 
 	// Calculate coordinates of each corner of the current cube
 	int3 cornerCoords[8];
+	
 	cornerCoords[0] = coord + int3(0, 0, 0);
 	cornerCoords[1] = coord + int3(1, 0, 0);
 	cornerCoords[2] = coord + int3(1, 0, 1);
@@ -100,6 +102,7 @@ void ProcessCube (int3 id : SV_DispatchThreadID)
 	cornerCoords[5] = coord + int3(1, 1, 0);
 	cornerCoords[6] = coord + int3(1, 1, 1);
 	cornerCoords[7] = coord + int3(0, 1, 1);
+	
 
 	// Calculate unique index for each cube configuration.
 	// There are 256 possible values (cube has 8 corners, so 2^8 possibilites).
@@ -129,21 +132,37 @@ void ProcessCube (int3 id : SV_DispatchThreadID)
 		int a0 = cornerIndexAFromEdge[edgeIndexA];
 		int a1 = cornerIndexBFromEdge[edgeIndexA];
 
+		//int a0 = cornerIndexAFromEdge[edgeIndices[i + 0]];
+		//int a1 = cornerIndexBFromEdge[edgeIndices[i + 0]];
+
 		int edgeIndexB = edgeIndices[i+1];
 		int b0 = cornerIndexAFromEdge[edgeIndexB];
 		int b1 = cornerIndexBFromEdge[edgeIndexB];
 
+		//int b0 = cornerIndexAFromEdge[edgeIndices[i + 1]];
+		//int b1 = cornerIndexBFromEdge[edgeIndices[i + 1]];
+
 		int edgeIndexC = edgeIndices[i+2];
 		int c0 = cornerIndexAFromEdge[edgeIndexC];
 		int c1 = cornerIndexBFromEdge[edgeIndexC];
+
+		//int c0 = cornerIndexAFromEdge[edgeIndices[i + 2]];
+		//int c1 = cornerIndexBFromEdge[edgeIndices[i + 2]];
 
 		// Calculate positions of each vertex.
 		Vertex vertexA = createVertex(cornerCoords[a0], cornerCoords[a1]);
 		Vertex vertexB = createVertex(cornerCoords[b0], cornerCoords[b1]);
 		Vertex vertexC = createVertex(cornerCoords[c0], cornerCoords[c1]);
 
+		//Vertex vertexA = (cornerCoords[a0] + cornerCoords[a1]) * 0.5;
+		//Vertex vertexB = (cornerCoords[b0] + cornerCoords[b1]) * 0.5;
+		//Vertex vertexC = (cornerCoords[c0] + cornerCoords[c1]) * 0.5;
+
 		// Create triangle
 		Triangle tri;
+		//Vertex vertexA = (cornerCoords[a0] + cornerCoords[a1]) * 0.5;
+		//Vertex vertexB = (cornerCoords[b0] + cornerCoords[b1]) * 0.5;
+		//Vertex vertexC = (cornerCoords[c0] + cornerCoords[c1]) * 0.5;
 		tri.vertexA = vertexC;
 		tri.vertexB = vertexB;
 		tri.vertexC = vertexA;

@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using Unity.Collections;
-using Unity.Mathematics;
+
 using UnityEngine;
 using UnityEngine.Rendering;
 
 public class GenTest : MonoBehaviour
 {
-
-	[SerializeField] BiomeHandler biomeHandler;
+	SeedGen seedGen;
+	BiomeHandler biomeHandler;
 
 	[Header("Init Settings")]
 	public int numChunks = 4;
@@ -45,9 +45,39 @@ public class GenTest : MonoBehaviour
 	System.Diagnostics.Stopwatch timer_fetchVertexData;
 	System.Diagnostics.Stopwatch timer_processVertexData;
 	RenderTexture originalMap;
+	RenderTexture biomeMap;
+	RenderTexture newRender;
+
+
+
+	Texture3D biomeNoiseTex;
+
+	Texture3D rainfallNoiseTex;
+	Texture3D tempNoiseTex;
 
 	void Start()
 	{
+		seedGen = GetComponent<SeedGen>();
+		biomeHandler = GetComponent<BiomeHandler>();
+
+		biomeHandler.GenBiome();
+		//material.SetInt("_biomeSize", biomeHandler.biomes.Length);
+
+		/*for (int i = 0; i < biomeHandler.biomes.Length; i++)
+        {
+			material.SetTexture("_biomeNoiseTex", biomeHandler.biomes[i].noiseTex);
+			material.SetColor("_biomeGrassLight", biomeHandler.biomes[i].lightGrassColor);
+			material.SetColor("_biomeGrassDark", biomeHandler.biomes[i].darkGrassColor);
+		}
+		*/
+		
+
+		biomeNoiseTex = biomeHandler.GenerateNoise(32,1,2,0.5f,2,0.9f);
+		rainfallNoiseTex = biomeHandler.GenerateNoise(32,1,2,0.5f,2,0.9f);
+		tempNoiseTex = biomeHandler.GenerateNoise(32,1,2,0.5f,2,0.9f);
+
+		biomeHandler.BiomeManager(material);
+
 		InitTextures();
 		CreateBuffers();
 
@@ -59,6 +89,13 @@ public class GenTest : MonoBehaviour
 
 		ComputeHelper.CreateRenderTexture3D(ref originalMap, processedDensityTexture);
 		ComputeHelper.CopyRenderTexture3D(processedDensityTexture, originalMap);
+
+
+
+		//ComputeHelper.CreateRenderTexture3D(ref originalMap, biomeMap);
+
+		//meshCompute.SetTexture(0, "_biomeNoiseTex", biomeHandler.GenerateTexture());
+		//		meshCompute.SetTexture(0, "_biomeNoiseTex", biomeHandler.GenerateNoise(32, 1, 2, 0.5f, 2, 0.9f));
 
 		//biomeHandler = GetComponent<BiomeHandler>();
 
@@ -76,6 +113,13 @@ public class GenTest : MonoBehaviour
 		Create3DTexture(ref rawDensityTexture, size, "Raw Density Texture");
 		Create3DTexture(ref processedDensityTexture, size, "Processed Density Texture");
 
+		//--
+		densityCompute.SetTexture(0, "BaseTexture", GenerateBase(size));
+
+
+
+		//--
+
 		if (!blurMap)
 		{
 			processedDensityTexture = rawDensityTexture;
@@ -86,7 +130,8 @@ public class GenTest : MonoBehaviour
 		editCompute.SetTexture(0, "EditTexture", rawDensityTexture);
 		blurCompute.SetTexture(0, "Source", rawDensityTexture);
 		blurCompute.SetTexture(0, "Result", processedDensityTexture);
-		meshCompute.SetTexture(0, "DensityTexture", (blurCompute) ? processedDensityTexture : rawDensityTexture);
+		//meshCompute.SetTexture(0, "DensityTexture", (blurCompute) ? processedDensityTexture : rawDensityTexture);
+		meshCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
 	}
 
 	void GenerateAllChunks()
@@ -105,6 +150,10 @@ public class GenTest : MonoBehaviour
 		}
 		Debug.Log("Total verts " + totalVerts);
 
+
+		//Invoke("SetVegatation", 0.5f);
+
+
 		// Print timers:
 		Debug.Log("Fetch vertex data: " + timer_fetchVertexData.ElapsedMilliseconds + " ms");
 		Debug.Log("Process vertex data: " + timer_processVertexData.ElapsedMilliseconds + " ms");
@@ -113,12 +162,19 @@ public class GenTest : MonoBehaviour
 
 	}
 
+	void SetVegatation()
+    {
+		//--Gen Vegatation--
+		biomeHandler.SetVegatation(rawDensityTexture.width);
+	}
+
 	void ComputeDensity()
 	{
 		// Get points (each point is a vector4: xyz = position, w = density)
 		int textureSize = rawDensityTexture.width;
 
-
+		noiseScale = Random.Range(0.1f, 0.95f);
+		//noiseHeightMultiplier = Random.Range(0.0001f, 0.5f);
 
 		densityCompute.SetInt("textureSize", textureSize);
 
@@ -186,12 +242,17 @@ public class GenTest : MonoBehaviour
 		timer_processVertexData.Stop();
 	}
 
-	void Update()
+
+    void Update()
 	{
+
+		material.SetTexture("_biomeNoiseTex", biomeNoiseTex);
+		material.SetTexture("_warmthNoiseTex", tempNoiseTex);
+		material.SetTexture("_rainfallNoiseTex", rainfallNoiseTex);
 
 		// TODO: move somewhere more sensible
 		material.SetTexture("DensityTex", originalMap);
-		material.SetFloat("oceanRadius", FindObjectOfType<Water>().radius);
+		//material.SetFloat("oceanRadius", FindObjectOfType<Water>().radius);
 		material.SetFloat("planetBoundsSize", boundsSize);
 
 		/*
@@ -255,7 +316,7 @@ public class GenTest : MonoBehaviour
 					meshHolder.layer = gameObject.layer;
 
 					Chunk chunk = new Chunk(coord, centre, chunkSize, numPointsPerAxis, meshHolder);
-					chunk.SetMaterial(material, biomeHandler);
+					chunk.SetMaterial(material);
 					chunks[i] = chunk;
 					i++;
 				}
@@ -341,5 +402,34 @@ public class GenTest : MonoBehaviour
 		texture.wrapMode = TextureWrapMode.Repeat;
 		texture.filterMode = FilterMode.Bilinear;
 		texture.name = name;
+	}
+
+	public Texture3D GenerateBase(int _textureSize)
+	{
+		TextureFormat _format = TextureFormat.RHalf;
+
+
+
+		SimplexNoiseGenerator noise = new SimplexNoiseGenerator();
+		Color[] colorArray = new Color[_textureSize * _textureSize * _textureSize];
+		Texture3D texture = new Texture3D(_textureSize, _textureSize, _textureSize, _format, false);
+		for (int x = 0 + 20; x < _textureSize - 20; x++)
+		{
+			for (int y = 0 + 20; y < _textureSize - 20; y++)
+			{
+				for (int z = 0 + 20; z < _textureSize - 20; z++)
+				{
+					//float value = noise.coherentNoise(x, y, z, _octaves, _multiplier, _amplitude, _lacunarity, _persistence);
+					float value = 1;
+					Color c = new Color(value, 0.0f, 0.0f, 1.0f);
+					colorArray[x + (y * _textureSize) + (z * _textureSize * _textureSize)] = c;
+				}
+			}
+		}
+
+
+		texture.SetPixels(colorArray);
+		texture.Apply();
+		return texture;
 	}
 }
