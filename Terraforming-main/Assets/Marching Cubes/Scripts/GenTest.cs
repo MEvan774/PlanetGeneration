@@ -8,6 +8,7 @@ public class GenTest : MonoBehaviour
 {
 	SeedGen seedGen;
 	BiomeHandler biomeHandler;
+	TreeHandler treehandler;
 
 	[Header("Init Settings")]
 	public int numChunks = 4;
@@ -27,6 +28,7 @@ public class GenTest : MonoBehaviour
 	public ComputeShader densityCompute;
 	public ComputeShader blurCompute;
 	public ComputeShader editCompute;
+	public ComputeShader treeCompute;
 	public Material material;
 
 
@@ -35,7 +37,7 @@ public class GenTest : MonoBehaviour
 	ComputeBuffer triCountBuffer;
 	[HideInInspector] public RenderTexture rawDensityTexture;
 	[HideInInspector] public RenderTexture processedDensityTexture;
-	Chunk[] chunks;
+	[HideInInspector] public Chunk[] chunks;
 
 	VertexData[] vertexDataArray;
 
@@ -59,6 +61,7 @@ public class GenTest : MonoBehaviour
 	{
 		seedGen = GetComponent<SeedGen>();
 		biomeHandler = GetComponent<BiomeHandler>();
+		treehandler = GetComponent<TreeHandler>();
 
 		biomeHandler.GenBiome();
 		//material.SetInt("_biomeSize", biomeHandler.biomes.Length);
@@ -91,6 +94,9 @@ public class GenTest : MonoBehaviour
 		ComputeHelper.CopyRenderTexture3D(processedDensityTexture, originalMap);
 
 
+		treehandler.rawDensityTexture = rawDensityTexture;
+
+		treehandler.SetTree(100, new Vector3(0, 700, 0), rawDensityTexture);
 
 		//ComputeHelper.CreateRenderTexture3D(ref originalMap, biomeMap);
 
@@ -98,6 +104,9 @@ public class GenTest : MonoBehaviour
 		//		meshCompute.SetTexture(0, "_biomeNoiseTex", biomeHandler.GenerateNoise(32, 1, 2, 0.5f, 2, 0.9f));
 
 		//biomeHandler = GetComponent<BiomeHandler>();
+		//--
+
+		//--
 
 	}
 
@@ -117,7 +126,6 @@ public class GenTest : MonoBehaviour
 		densityCompute.SetTexture(0, "BaseTexture", GenerateBase(size));
 
 
-
 		//--
 
 		if (!blurMap)
@@ -128,6 +136,7 @@ public class GenTest : MonoBehaviour
 		// Set textures on compute shaders
 		densityCompute.SetTexture(0, "DensityTexture", rawDensityTexture);
 		editCompute.SetTexture(0, "EditTexture", rawDensityTexture);
+		treeCompute.SetTexture(0, "TreeMapTexture", rawDensityTexture);
 		blurCompute.SetTexture(0, "Source", rawDensityTexture);
 		blurCompute.SetTexture(0, "Result", processedDensityTexture);
 		//meshCompute.SetTexture(0, "DensityTexture", (blurCompute) ? processedDensityTexture : rawDensityTexture);
@@ -199,7 +208,7 @@ public class GenTest : MonoBehaviour
 		}
 	}
 
-	void GenerateChunk(Chunk chunk)
+	public void GenerateChunk(Chunk chunk)
 	{
 
 
@@ -348,6 +357,62 @@ public class GenTest : MonoBehaviour
 
 		editCompute.SetInt("size", editTextureSize);
 		ComputeHelper.Dispatch(editCompute, editTextureSize, editTextureSize, editTextureSize);
+
+		//ProcessDensityMap();
+		int size = rawDensityTexture.width;
+
+		if (blurMap)
+		{
+			blurCompute.SetInt("textureSize", rawDensityTexture.width);
+			blurCompute.SetInts("brushCentre", editX - blurRadius - editRadius, editY - blurRadius - editRadius, editZ - blurRadius - editRadius);
+			blurCompute.SetInt("blurRadius", blurRadius);
+			blurCompute.SetInt("brushRadius", editRadius);
+			int k = (editRadius + blurRadius) * 2;
+			ComputeHelper.Dispatch(blurCompute, k, k, k);
+		}
+
+		//ComputeHelper.CopyRenderTexture3D(originalMap, processedDensityTexture);
+
+		float worldRadius = (editRadius + 1 + ((blurMap) ? blurRadius : 0)) * editPixelWorldSize;
+		for (int i = 0; i < chunks.Length; i++)
+		{
+			Chunk chunk = chunks[i];
+			if (MathUtility.SphereIntersectsBox(point, worldRadius, chunk.centre, Vector3.one * chunk.size))
+			{
+
+				chunk.terra = true;
+				GenerateChunk(chunk);
+
+			}
+		}
+	}
+
+
+
+	public void PlaceTree(Vector3 point, float weight, float radius)
+	{
+		Vector3 Placepoint = new Vector3(point.x,point.y + 10, point.z);
+
+		int editTextureSize = rawDensityTexture.width;
+		float editPixelWorldSize = boundsSize / editTextureSize;
+		int editRadius = Mathf.CeilToInt(radius / editPixelWorldSize);
+		//Debug.Log(editPixelWorldSize + "  " + editRadius);
+
+		float tx = Mathf.Clamp01((point.x + boundsSize / 2) / boundsSize);
+		float ty = Mathf.Clamp01((point.y + boundsSize / 2) / boundsSize);
+		float tz = Mathf.Clamp01((point.z + boundsSize / 2) / boundsSize);
+
+		int editX = Mathf.RoundToInt(tx * (editTextureSize - 1));
+		int editY = Mathf.RoundToInt(ty * (editTextureSize - 1));
+		int editZ = Mathf.RoundToInt(tz * (editTextureSize - 1));
+
+		treeCompute.SetFloat("weight", weight);
+		treeCompute.SetFloat("deltaTime", Time.deltaTime);
+		treeCompute.SetInts("brushCentre", editX, editY, editZ);
+		treeCompute.SetInt("brushRadius", editRadius);
+
+		treeCompute.SetInt("size", editTextureSize);
+		ComputeHelper.Dispatch(treeCompute, editTextureSize, editTextureSize, editTextureSize);
 
 		//ProcessDensityMap();
 		int size = rawDensityTexture.width;

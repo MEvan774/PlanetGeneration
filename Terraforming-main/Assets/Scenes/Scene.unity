@@ -397,6 +397,7 @@ GameObject:
   - component: {fileID: 394546157}
   - component: {fileID: 394546158}
   - component: {fileID: 394546155}
+  - component: {fileID: 394546159}
   m_Layer: 7
   m_Name: Terrrain Generator
   m_TagString: Untagged
@@ -429,6 +430,7 @@ MonoBehaviour:
   densityCompute: {fileID: 7200000, guid: fdcbc69751eaad74faeb564239fdeb4c, type: 3}
   blurCompute: {fileID: 7200000, guid: a1dfefa5af6fea6428bec38832b86d07, type: 3}
   editCompute: {fileID: 7200000, guid: 865b82eeee4482a4eae431180e801a76, type: 3}
+  treeCompute: {fileID: 7200000, guid: ad14339f8a4b4374c96386fd0d77a4b6, type: 3}
   material: {fileID: 2100000, guid: 4ea24032fa3e71a4fae0169d57697b45, type: 2}
   rawDensityTexture: {fileID: 0}
   processedDensityTexture: {fileID: 0}
@@ -499,6 +501,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 955ca03c86f7b584890118dbd088855e, type: 2}
   - {fileID: 11400000, guid: 12803e03c744d454b9ba60ce197cbfd1, type: 2}
   biomeMap: {fileID: 0}
+--- !u!114 &394546159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 394546154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18b0e85f1d041284f8a7406b240c8e2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  blurCompute: {fileID: 7200000, guid: a1dfefa5af6fea6428bec38832b86d07, type: 3}
+  editCompute: {fileID: 7200000, guid: a1dfefa5af6fea6428bec38832b86d07, type: 3}
+  rawDensityTexture: {fileID: 0}
+  treeCompute: {fileID: 7200000, guid: ad14339f8a4b4374c96386fd0d77a4b6, type: 3}
+  blurRadius: 3
+  treeSize: 10
 --- !u!1 &522525933
 GameObject:
   m_ObjectHideFlags: 0

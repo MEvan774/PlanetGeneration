@@ -1,0 +1,88 @@
+﻿#pragma kernel CSMain
+
+RWTexture3D<float> TreeMapTexture;
+int size;
+int3 brushCentre;
+int brushRadius;
+float deltaTime;
+float weight;
+
+// return smooth value between 0 and 1 (0 when t = minVal, 1 when t = maxVal)
+float smoothstep(float minVal, float maxVal, float t) {
+	t = saturate((t - minVal) / (maxVal - minVal));
+	return t * t * (3 - 2 * t);
+}
+/*
+float boxSDF(float3 position, float3 dimensions)
+{
+	float3 d = abs(position) - dimensions * 0.5;
+	return length(max(d, 0)) + min(d, 0);
+}
+
+float sdf_box(float3 p, float3 c, float3 s)//Postition , centre , size
+{
+	float x = max(p.x - c.x - float3(s.x / 2., 0, 0), c.x - p.x - float3(s.x / 2., 0, 0));
+	float y = max(p.y - c.y - float3(s.y / 2., 0, 0),c.y - p.y - float3(s.y / 2., 0, 0));
+
+	float z = max(p.z - c.z - float3(s.z / 2., 0, 0),c.z - p.z - float3(s.z / 2., 0, 0));
+	float d = x;
+	d = max(d, y);
+	d = max(d, z);
+	return d;
+}
+*/
+
+float sdVerticalCapsule(float3 p, float h, float r)
+{
+	p.y -= clamp(p.y, 0.0, h);
+	return length(p) - r;
+}
+
+float sdSphere(float3 p, float s)
+{
+	return length(p) - s;
+}
+
+
+float opUnion(float d1, float d2)
+{
+	return min(d1, d2);
+}
+
+
+[numthreads(8, 8, 8)]
+void CSMain(int3 id : SV_DispatchThreadID)
+{
+	//if (id.x >= size || id.y >= size || id.z >= size) {
+	//	return;
+	//}
+	const int b = 4;
+	if (id.x >= size - b || id.y >= size - b || id.z >= size - b) {
+		return;
+	}
+	if (id.x <= b || id.y <= b || id.z <= b) {
+		return;
+	}
+
+	int3 offset = id - brushCentre;
+	int sqrDst = dot(offset, offset);
+
+	int3 trunkLoc = brushCentre + (brushCentre.y - 5 );
+
+	if (sqrDst <= brushRadius * brushRadius) {
+		float dst = sqrt(sqrDst);
+		float brushWeight = 1 - smoothstep(brushRadius * 0.7, brushRadius, dst);
+
+		//brushWeight = 1;
+		float trunk = sdVerticalCapsule(offset, 5, 1);
+		float leaves = sdSphere(offset + int3(0,-5,0), 3);
+		//float trunk = sdf_boxcheap(id, brushCentre, 0.5);
+		
+		float treeWhole = opUnion(trunk, leaves);
+
+		TreeMapTexture[id] += treeWhole;
+	}
+
+
+	//EditTexture[id] = sin(id.x * 2) * 0.2;
+}
